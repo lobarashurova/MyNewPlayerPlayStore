@@ -8,9 +8,6 @@ import uz.mlsoft.mynewplayerplaystore.presentation.splash.SplashDirection
 import uz.mlsoft.mynewplayerplaystore.presentation.splash.SplashDirectionImpl
 import javax.inject.Singleton
 
-/**
- * Created by Shukrullo Zokirov on 10/27/2023.
- */
 @Module
 @InstallIn(SingletonComponent::class)
 interface DirectionModule {

@@ -15,8 +15,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -26,12 +36,13 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,8 +51,9 @@ import cafe.adriel.voyager.hilt.getScreenModel
 import org.orbitmvi.orbit.compose.collectAsState
 import uz.mlsoft.mynewplayerplaystore.R
 import uz.mlsoft.mynewplayerplaystore.ui.components.MusicItem
+import uz.mlsoft.mynewplayerplaystore.ui.components.PlayerIconItem
+import uz.mlsoft.mynewplayerplaystore.ui.components.WrapperColumn
 import uz.mlsoft.mynewplayerplaystore.ui.theme.MyNewPlayerPlayStoreTheme
-import uz.mlsoft.mynewplayerplaystore.ui.theme.colorPrimaryDark
 import uz.mlsoft.mynewplayerplaystore.utils.getAlbumArt
 import uz.mlsoft.mynewplayerplaystore.utils.myTimber
 
@@ -49,7 +61,7 @@ class HomeScreen : AndroidScreen() {
     @Composable
     override fun Content() {
         val screenModel: HomeContract.ScreenModel = getScreenModel<HomeViewModel>()
-
+        screenModel.onEventDispatcher(HomeContract.Event.LoadAudioData)
         HomeScreenContent(screenModel.collectAsState(), screenModel::onEventDispatcher)
     }
 }
@@ -60,7 +72,6 @@ fun HomeScreenContent(
     onEventDispatcher: (HomeContract.Event) -> Unit
 ) {
 
-    val context = LocalContext.current
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -94,95 +105,73 @@ fun HomeScreenContent(
                         .align(CenterVertically)
                 )
             }
-
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 itemsIndexed(uiState.value.audioList) { index, audio ->
                     MusicItem(model = audio) {
                         onEventDispatcher(HomeContract.Event.OnItemClick(index))
                     }
-
                 }
+                myTimber("size screen list:${uiState.value.audioList}")
             }
 
         }
         Card(
+            shape = CircleShape.copy(all = CornerSize(32.dp)),
             modifier = Modifier
-                .padding(bottom = 15.dp, start = 10.dp, end = 10.dp)
-                .fillMaxWidth()
-                .height(80.dp)
                 .align(Alignment.BottomCenter)
+                .height(75.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(color = Color.White)
-            ) {
-                Image(
-                    bitmap = getAlbumArt(
-                        context,
-                        uiState.value.currentMusicModel.uri
-                    ).asImageBitmap(),
-
-                    contentDescription = "",
+            WrapperColumn {
+                LinearProgressIndicator(
                     modifier = Modifier
-                        .size(65.dp)
-                        .clip(RoundedCornerShape(15.dp))
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp)
+                        .height(2.dp),
+                    progress = uiState.value.progress / 100f,
                 )
-                myTimber("uri screen:${uiState.value.currentMusicModel.uri}")
-                Column() {
-                    Text(
-                        text = uiState.value.currentMusicModel.artist,
-                        fontWeight = FontWeight(500),
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(top = 10.dp, start = 20.dp)
+                Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .align(Alignment.CenterVertically),
+                        bitmap = getAlbumArt(
+                            LocalContext.current,
+                            uiState.value.currentMusicModel.uri
+                        ).asImageBitmap(),
+                        contentDescription = "Audio image",
+                        contentScale = ContentScale.Crop
                     )
-
-                    Text(
-                        text = uiState.value.currentMusicModel.displayName,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(start = 20.dp)
-                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = uiState.value.currentMusicModel.title,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            overflow = TextOverflow.Clip,
+                            maxLines = 1,
+                        )
+                        Spacer(modifier = Modifier.size(4.dp))
+                        Text(
+                            text = uiState.value.currentMusicModel.artist,
+                            fontWeight = FontWeight.Normal,
+                            style = MaterialTheme.typography.titleSmall,
+                            overflow = TextOverflow.Clip,
+                            maxLines = 1
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Icon(imageVector = Icons.Default.SkipPrevious, contentDescription = null,
+                        modifier = Modifier.clickable { onEventDispatcher(HomeContract.Event.OnPrev) })
+                    Spacer(modifier = Modifier.size(8.dp))
+                    PlayerIconItem(icon = if (uiState.value.isAudioPlaying) Icons.Default.Pause else Icons.Default.PlayArrow) {
+                        onEventDispatcher(HomeContract.Event.OnStart)
+                    }
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Icon(imageVector = Icons.Default.SkipNext, contentDescription = null,
+                        modifier = Modifier.clickable { onEventDispatcher(HomeContract.Event.OnNext) })
                 }
-                Spacer(modifier = Modifier.weight(1f))
-                Row(modifier = Modifier.align(CenterVertically)) {
-                    Image(
-                        painter = painterResource(id = R.drawable.before),
-                        contentDescription = "",
-                        colorFilter = ColorFilter.tint(
-                            colorPrimaryDark
-                        ), modifier = Modifier
-                            .padding(end = 10.dp)
-                            .size(30.dp)
-                            .align(CenterVertically)
-                            .clickable {
-
-                            }
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.play),
-                        contentDescription = "",
-                        colorFilter = ColorFilter.tint(
-                            colorPrimaryDark
-
-                        ), modifier = Modifier
-                            .size(30.dp)
-                            .padding(end = 10.dp)
-                            .align(CenterVertically)
-                            .clickable { }
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.after),
-                        contentDescription = "",
-                        colorFilter = ColorFilter.tint(
-                            colorPrimaryDark
-
-                        ), modifier = Modifier
-                            .padding(end = 10.dp)
-                            .size(30.dp)
-                            .clickable { }
-                    )
-                }
-
             }
         }
 

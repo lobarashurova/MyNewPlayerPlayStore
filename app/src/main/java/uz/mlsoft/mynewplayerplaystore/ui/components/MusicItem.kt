@@ -21,16 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import uz.mlsoft.mynewplayerplaystore.R
 import uz.mlsoft.mynewplayerplaystore.data.model.MusicModel
 import uz.mlsoft.mynewplayerplaystore.utils.getAlbumArt
 import uz.mlsoft.mynewplayerplaystore.utils.timeStampToDuration
@@ -59,32 +55,49 @@ fun MusicItem(model: MusicModel, onClick: () -> Unit) {
                         .padding(start = 10.dp)
                         .size(58.dp)
                         .align(Alignment.CenterVertically)
-                        .clip(RoundedCornerShape(15.dp)),
+                        .clip(RoundedCornerShape(15.dp)), contentScale = ContentScale.Crop
                 )
-                Column(modifier = Modifier.padding(start = 15.dp).align(Alignment.CenterVertically)) {
-                    Text(
-                        text = model.artist,
-                        style = TextStyle(
-                            fontSize = 19.sp,
-                            fontFamily = FontFamily(Font(R.font.monserrat)),
-                            fontWeight = FontWeight(400),
-                            color = Color(0xFF000000),
+                Column(
+                    modifier = Modifier
+                        .padding(start = 15.dp)
+                        .align(Alignment.CenterVertically)
+                ) {
+                    if (model.displayName.length > 25) {
+                        Text(
+                            text = model.displayName.substring(0, 22),
+                            style = MaterialTheme.typography.titleMedium,
+                            overflow = TextOverflow.Clip,
+                            maxLines = 1
                         )
-                    )
+                    } else {
+                        Text(
+                            text = model.displayName,
+                            style = MaterialTheme.typography.titleMedium,
+                            overflow = TextOverflow.Clip,
+                            maxLines = 1
+                        )
+                    }
 
-                    Text(
-                        text = model.title,
-                        style = TextStyle(
-                            fontSize = 19.sp,
-                            fontFamily = FontFamily(Font(R.font.monserrat)),
-                            fontWeight = FontWeight(400),
-                            color = Color(0xFF000000),
+                    if (model.artist.length > 22) {
+                        Text(
+                            text = model.artist.substring(0, 22),
+                            style = MaterialTheme.typography.titleSmall,
+                            overflow = TextOverflow.Clip,
+                            maxLines = 1
                         )
-                    )
+                    } else{
+                        Text(
+                            text = model.artist,
+                            style = MaterialTheme.typography.titleSmall,
+                            overflow = TextOverflow.Clip,
+                            maxLines = 1
+                        )
+                    }
                 }
 
 
             }
+
             Text(
                 text = timeStampToDuration(model.duration.toLong()),
                 style = MaterialTheme.typography.titleSmall,

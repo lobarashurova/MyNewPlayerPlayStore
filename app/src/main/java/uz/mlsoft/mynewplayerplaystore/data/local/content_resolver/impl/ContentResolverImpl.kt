@@ -13,7 +13,7 @@ import javax.inject.Inject
 class ContentResolverImpl
 @Inject constructor(@ApplicationContext val context: Context) :
     ContentResolver {
-    private var mCursor: Cursor? = null
+    private var myCursor: Cursor? = null
 
     private val projection: Array<String> = arrayOf(
         MediaStore.Audio.AudioColumns.DISPLAY_NAME,
@@ -29,20 +29,22 @@ class ContentResolverImpl
     private val sortOrder = "${MediaStore.Audio.AudioColumns.DISPLAY_NAME} ASC"
 
     override suspend fun getMusicData(): List<MusicModel> {
+        myTimber("getCursorData() size ${getCursorData().size}")
         return getCursorData()
+
     }
 
     private fun getCursorData(): MutableList<MusicModel> {
         val audioList = mutableListOf<MusicModel>()
 
-        mCursor = context.contentResolver.query(
+        myCursor = context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
             selectionClause,
             selectionArg,
             sortOrder
         )
-        mCursor?.use { cursor ->
+        myCursor?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns._ID)
             val displayNameColumn =
                 cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns.DISPLAY_NAME)
@@ -70,6 +72,7 @@ class ContentResolverImpl
                             id
                         )
                         myTimber("uri content:${uri}")//why i am getting empty uri
+                        myTimber("id:${getLong(idColumn)}")
                         audioList += MusicModel(
                             uri,
                             displayName,

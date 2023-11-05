@@ -20,6 +20,7 @@ import uz.mlsoft.mynewplayerplaystore.player.service.AudioServiceHandler
 import uz.mlsoft.mynewplayerplaystore.player.service.AudioState
 import uz.mlsoft.mynewplayerplaystore.player.service.PlayerEvent
 import uz.mlsoft.mynewplayerplaystore.utils.formatDuration
+import uz.mlsoft.mynewplayerplaystore.utils.myTimber
 import javax.inject.Inject
 
 class HomeViewModel @Inject constructor(
@@ -31,6 +32,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         audioServiceHandler.audioState.onEach { mediaState ->
+            myTimber("init")
             when (mediaState) {
                 AudioState.Initial -> {}
                 is AudioState.Buffering -> calculateProgressValue(mediaState.progress)
@@ -54,18 +56,23 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             }
+            myTimber("size repository:${repository.getMusicsList().size}")
         }.launchIn(coroutineScope)
     }
 
+
     override fun onEventDispatcher(event: HomeContract.Event) {
-        when(event){
+        when (event) {
             HomeContract.Event.LoadAudioData -> loadAudioData()
             HomeContract.Event.OnPrev -> audioServiceHandler
                 .onPlayerEvents(PlayerEvent.SeekToPrev)
+
             HomeContract.Event.OnNext -> audioServiceHandler
                 .onPlayerEvents(PlayerEvent.SeekToNext)
+
             HomeContract.Event.OnStart -> audioServiceHandler
                 .onPlayerEvents(PlayerEvent.PlayPause)
+
             is HomeContract.Event.OnItemClick -> selectMusic(event.index)
 
             else -> {}
@@ -105,7 +112,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadAudioData() = intent {
         val audio = repository.getMusicsList()
-
+        myTimber("audio size:${audio.size}")
         reduce { this.state.copy(audioList = audio) }
         setMediaItems()
     }

@@ -26,7 +26,7 @@ fun getAlbumArt(context: Context, uri: Uri): Bitmap {
     return if (data != null) {
         BitmapFactory.decodeByteArray(data, 0, data.size)
     } else {
-        BitmapFactory.decodeResource(context.resources, R.drawable.music_place)
+        BitmapFactory.decodeResource(context.resources, R.drawable.my_music)
     }
 }
 
